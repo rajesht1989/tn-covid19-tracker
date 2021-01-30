@@ -14,7 +14,7 @@ struct StateData: Codable {
     let casesTimeSeries: [CasesTimeSery]
     let statewise: [Statewise]
     let tested: [Tested]
-
+    
     enum CodingKeys: String, CodingKey {
         case casesTimeSeries = "cases_time_series"
         case statewise, tested
@@ -42,9 +42,9 @@ struct Statewise: Codable {
         fromFormat.dateFormat = "dd/MM/yyyy HH:mm:ss"
         
         let toFormat = DateFormatter()
-             toFormat.dateFormat = "dd MMM yyyy"
+        toFormat.dateFormat = "dd MMM yyyy"
         
-        return "Tamilnadu Covid-19 update 🦠 for " + toFormat.string(from: fromFormat.date(from: lastupdatedtime)!) + " Confirmed Today - " + deltaconfirmed + ", Recovered Today - " + deltarecovered + ", Deaths Today - " + deltadeaths + ", Total confirmed - " + confirmed + ", Active - " + active + ", Total deaths - " + deaths + "\n\n\nApp Link - https://ledbanner.page.link/share \nTamilnadu Covid-19 update 🦠 for " + toFormat.string(from: fromFormat.date(from: lastupdatedtime)!) + "\nConfirmed Today - " + deltaconfirmed + "\nRecovered Today - " + deltarecovered + "\nDeaths Today - " + deltadeaths + "\nTotal confirmed - " + confirmed + "\nActive - " + active + "\nTotal deaths - " + deaths + "\nSource - https://www.covid19india.org/\n\n"
+        return "Tamilnadu Covid-19 update 🦠 for " + toFormat.string(from: fromFormat.date(from: lastupdatedtime)!) + "\nConfirmed Today - " + deltaconfirmed + "\nRecovered Today - " + deltarecovered + "\nDeaths Today - " + deltadeaths + "\nTotal confirmed - " + confirmed + "\nActive - " + active + "\nTotal deaths - " + deaths + "\nSource - https://www.covid19india.org/\n\n" + "Tamilnadu Covid-19 update 🦠 for " + toFormat.string(from: fromFormat.date(from: lastupdatedtime)!) + " Confirmed Today - " + deltaconfirmed + ", Recovered Today - " + deltarecovered + ", Deaths Today - " + deltadeaths + ", Total confirmed - " + confirmed + ", Active - " + active + ", Total deaths - " + deaths + "\n\n\nApp Link - https://ledbanner.page.link/share \n\n\nTamilnadu Covid-19 update 🦠 for " + toFormat.string(from: fromFormat.date(from: lastupdatedtime)!) + "\nConfirmed Today - " + deltaconfirmed + "\nRecovered Today - " + deltarecovered + "\nDeaths Today - " + deltadeaths + "\nTotal confirmed - " + confirmed + "\nActive - " + active + "\nTotal deaths - " + deaths + "\nSource - https://www.covid19india.org/\n\n"
         
     }
 }
@@ -53,22 +53,22 @@ struct Statewise: Codable {
 struct Tested: Codable {
     let individualstestedperconfirmedcase, positivecasesfromsamplesreported, samplereportedtoday: String
     let source: String
-    let source1: String
+//    let source1: String
     let testpositivityrate, testsconductedbyprivatelabs, testsperconfirmedcase, testspermillion: String
     let totalindividualstested, totalpositivecases, totalsamplestested, updatetimestamp: String
 }
 
 
 class ViewController: UIViewController {
-
+    
     @IBOutlet weak var textview: UITextView!
     var districWiseDict: [String: Any]?
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.reloadAction("")
     }
-
+    
     @IBAction func reloadAction(_ sender: Any) {
         self.textview.text = ""
         
@@ -81,13 +81,17 @@ class ViewController: UIViewController {
                     self.textview.text = error?.localizedDescription
                     return
                 }
-                let stateData = try? JSONDecoder().decode(StateData.self, from: data)
+                do {
+                    let stateData: StateData? = try JSONDecoder().decode(StateData.self, from: data)
                 if let statewise = stateData?.statewise {
                     for item in statewise {
                         if item.statecode == "TN" {
                             self.addText(text: item.desctiption())
                         }
                     }
+                }
+                } catch {
+                    print(error)
                 }
                 
             }
@@ -101,10 +105,11 @@ class ViewController: UIViewController {
                 guard let data = data, error == nil else {
                     return
                 }
-                self.navigationItem.leftBarButtonItem?.isEnabled = true
                 do {
                     if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                         self.districWiseDict = dict;
+                        self.navigationItem.leftBarButtonItem?.isEnabled = true
+                        self.addCglData()
                     }
                 } catch {
                     print(error.localizedDescription)
@@ -113,12 +118,30 @@ class ViewController: UIViewController {
         }.resume()
     }
     
+    func addCglData() {
+        if let tnData = districWiseDict?["Tamil Nadu"] as? [String: Any], let district = tnData["districtData"] as? [String: Any] {
+            if let chennaiData = district["Chennai"] as? [String: Any] {
+                addText(text: districtData(district: "Chennai", dict: chennaiData))
+            }
+            
+            if let chennaiData = district["Chengalpattu"] as? [String: Any] {
+                addText(text: districtData(district: "Chengalpattu", dict: chennaiData))
+            }
+            
+            if let chennaiData = district["Theni"] as? [String: Any] {
+                addText(text: districtData(district: "Theni", dict: chennaiData))
+            }
+            
+        }
+        
+    }
+    
     @IBAction func districtWiseAction(_ sender: Any) {
         if let districWiseDict = districWiseDict {
-         self.alertController(title: "Choose value", actions: districWiseDict)
+            self.alertController(title: "Choose value", actions: districWiseDict)
         }
     }
-
+    
     
     
     func alertController(title: String, actions: [String: Any]) {
@@ -141,7 +164,7 @@ class ViewController: UIViewController {
     }
     
     func addText(text: String) {
-        self.textview.text = "\n\n" + text + "\n\n" + self.textview.text
+        self.textview.text = "\n" + text + "\n" + self.textview.text
     }
     
     func districtData(district: String, dict: [String: Any]) -> String {
@@ -152,7 +175,7 @@ class ViewController: UIViewController {
             returnString = returnString + "\nTotal confirmed - " + asString(number: dict["confirmed"])
             returnString = returnString + "\nActive - " + asString(number: dict["active"])
             returnString = returnString + "\nTotal deaths - " + asString(number: dict["deceased"])
-            returnString = returnString + "\nSource - https://www.covid19india.org/\n\n"
+//            returnString = returnString + "\nSource - https://www.covid19india.org/\n\n"
             return returnString
         } else {
             return "---"

@@ -51,10 +51,11 @@ struct Statewise: Codable {
 
 // MARK: - Tested
 struct Tested: Codable {
-    let individualstestedperconfirmedcase, positivecasesfromsamplesreported, samplereportedtoday: String
+//    let individualstestedperconfirmedcase: String?
+    let positivecasesfromsamplesreported, samplereportedtoday: String
     let source: String
 //    let source1: String
-    let testpositivityrate, testsconductedbyprivatelabs, testsperconfirmedcase, testspermillion: String
+    let testsconductedbyprivatelabs: String
     let totalindividualstested, totalpositivecases, totalsamplestested, updatetimestamp: String
 }
 
@@ -83,13 +84,14 @@ class ViewController: UIViewController {
                 }
                 do {
                     let stateData: StateData? = try JSONDecoder().decode(StateData.self, from: data)
-                if let statewise = stateData?.statewise {
-                    for item in statewise {
-                        if item.statecode == "TN" {
-                            self.addText(text: item.desctiption())
+                    if let statewise = stateData?.statewise {
+                        for item in statewise {
+                            if item.statecode == "TN" {
+                                self.addText(text: item.desctiption())
+                            }
                         }
                     }
-                }
+                    self.tnDistrictData()
                 } catch {
                     print(error)
                 }
@@ -97,6 +99,9 @@ class ViewController: UIViewController {
             }
         }.resume()
         navigationItem.leftBarButtonItem?.isEnabled = false
+    }
+    
+    func tnDistrictData() {
         var districtWiseRequest = URLRequest(url: URL(string: "https://api.covid19india.org/state_district_wise.json")!,timeoutInterval: Double.infinity)
         districtWiseRequest.httpMethod = "GET"
         
@@ -116,6 +121,7 @@ class ViewController: UIViewController {
                 }
             }
         }.resume()
+
     }
     
     func addCglData() {
